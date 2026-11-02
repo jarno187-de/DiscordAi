@@ -9,7 +9,7 @@ export const config = {
     // Primary brain: any OpenAI-compatible API. Default = Groq's free tier.
     baseUrl: (process.env.AI_BASE_URL || 'https://api.groq.com/openai/v1').replace(/\/+$/, ''),
     apiKey: process.env.AI_API_KEY || '',
-    model: process.env.AI_MODEL || 'llama-3.1-8b-instant',
+    model: process.env.AI_MODEL || 'openai/gpt-oss-20b',
     minIntervalMs: num(process.env.AI_MIN_INTERVAL_MS, 0),
     timeoutMs: num(process.env.AI_TIMEOUT_MS, 30000),
     // Backup brain: Pollinations.ai, free and works without any key (but slow-ish limits).

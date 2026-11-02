@@ -49,7 +49,7 @@ Außerdem antwortet Brian, wenn man ihn **@erwähnt**, auf seine Nachricht **ant
 
 Brian nutzt eine Kette, damit er immer *irgendwas* sagt:
 
-1. **Groq** (empfohlen) – gratis API-Key, schnell, Modell `llama-3.1-8b-instant` (klein und angemessen dumm).
+1. **Groq** (empfohlen) – gratis API-Key, schnell, Modell `openai/gpt-oss-20b` (`llama-3.1-8b-instant` wurde im Aug. 2026 abgeschaltet).
 2. **Pollinations.ai** – funktioniert **ganz ohne Key/Anmeldung**, aber nur ca. 1 Antwort pro 45 Sekunden.
 3. **Eingebaute dumme Sprüche** – wenn beides gerade nicht geht („error 404: thought not found 🫠“).
 

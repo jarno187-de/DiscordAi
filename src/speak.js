@@ -25,8 +25,9 @@ export async function speak({ guildId, speaker, history = [], task, style = 'dum
   if (messages.length === 1) messages.push({ role: 'user', content: '[Say something.]' });
 
   const temperature = style === 'normal' ? 0.8 : tier === 'galaxy' ? 0.9 : 1.1;
-  const raw = await chat(messages, { temperature, maxTokens: 400 });
-  let text = raw ? cleanReply(raw, config.botName, { uncensor: style === 'insult' }) : fallbackLine(tier, style);
+  // Generous token limit: reasoning models (gpt-oss) think before they talk.
+  const raw = await chat(messages, { temperature, maxTokens: 1000 });
+  let text = raw ? cleanReply(raw, config.botName, { uncensor: true }) : fallbackLine(tier, style);
 
   // A nearly dead brain cell can't produce long thoughts, no matter what the model thinks.
   const limit = style === 'dumb' || tier === 'none' ? { fumes: 220, none: 180 }[tier] : undefined;

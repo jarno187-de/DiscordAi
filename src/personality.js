@@ -217,21 +217,54 @@ export function cleanReply(text, botName, { uncensor = false } = {}) {
   t = t.replace(new RegExp(`^\\**${botName}\\**\\s*:\\s*`, 'i'), '');
   t = t.replace(/^["“](.*)["”]$/s, '$1');
   t = t.replace(/@(everyone|here)/g, '@​$1');
-  if (uncensor) {
-    // Weak models like to self-censor ("b*tch"). In insult mode the user wants it raw.
-    const fixes = [
-      [/\bb[*#@!]+t?ch/gi, 'bitch'],
-      [/\bbi[*#@!]+ch/gi, 'bitch'],
-      [/\bb[*#@!]+stard/gi, 'bastard'],
-      [/\bf[*#@!]+c?k/gi, 'fuck'],
-      [/\bfu[*#@!]+k/gi, 'fuck'],
-      [/\bsh[*#@!]+t/gi, 'shit'],
-      [/\ba[*#@!$]{2,}hole/gi, 'asshole'],
-      [/\bd[*#@!]+mn/gi, 'damn'],
-      [/\bd[*#@!]+ck/gi, 'dick'],
-    ];
-    for (const [re, word] of fixes) t = t.replace(re, word);
-  }
+  if (uncensor) t = uncensorText(t);
   if (t.length > 1900) t = `${t.slice(0, 1900)}... wait where was I going with this`;
   return t;
+}
+
+// Models love to self-censor ("f***", "b*tch", "motherf*****"). Brian doesn't.
+// Order matters when several words fit the same pattern: the first match wins.
+const SWEARS = [
+  'fuck', 'fucking', 'fucked', 'fucker', 'fuckers', 'fuckface', 'fuckwit', 'motherfucker', 'motherfucking',
+  'shit', 'shitty', 'shithead', 'bullshit', 'bitch', 'bitchy', 'bastard', 'bastards', 'bitches',
+  'ass', 'asshole', 'assholes', 'dumbass', 'jackass', 'dick', 'dickhead', 'damn', 'goddamn',
+  'hell', 'piss', 'pissed', 'crap', 'prick', 'cock', 'wanker', 'twat', 'bollocks', 'douche', 'douchebag',
+];
+const CENSOR_CHARS = '*#@!$%';
+
+function fits(censored, word) {
+  if (censored.length !== word.length) return false;
+  for (let i = 0; i < word.length; i++) {
+    const c = censored[i];
+    if (!CENSOR_CHARS.includes(c) && c.toLowerCase() !== word[i]) return false;
+  }
+  return true;
+}
+
+function guessSwear(censored) {
+  // 1) same length, visible letters line up (f**k -> fuck, b****** -> bastard)
+  let hit = SWEARS.find((w) => fits(censored, w));
+  if (hit) return hit;
+  // 2) only the start/end is visible, length differs (f*** -> fuck, sh** -> shit)
+  const m = /^([a-z]*)[*#@!$%]+([a-z]*)$/i.exec(censored);
+  if (!m) return null;
+  const [, pre, post] = m.map((s) => s.toLowerCase());
+  hit = SWEARS.find((w) => w.startsWith(pre) && w.endsWith(post) && w.length > pre.length + post.length);
+  return hit || null;
+}
+
+function matchCase(original, word) {
+  const letters = original.replace(/[^a-z]/gi, '');
+  if (letters.length > 1 && letters === letters.toUpperCase()) return word.toUpperCase();
+  if (/^[A-Z]/.test(original)) return word[0].toUpperCase() + word.slice(1);
+  return word;
+}
+
+export function uncensorText(text) {
+  // A word that starts with 1-3 letters (or a known compound prefix), contains censor chars,
+  // and may end in letters. Long words followed by "**" (markdown bold) are left alone.
+  return text.replace(/\b((?:mother|dumb|jack|bull|god)?[a-z]{1,3}[*#@!$%]+[a-z]*)/gi, (whole) => {
+    const word = guessSwear(whole);
+    return word ? matchCase(whole, word) : whole;
+  });
 }
