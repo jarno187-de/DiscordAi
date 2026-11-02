@@ -76,8 +76,55 @@ Brians Gedächtnis (Energie, Diebe, Freundschaften) liegt in `data/brain.json`.
 
 **Wasserzeichen:** Jede Nachricht des Bots endet klein mit „made by jarnoo__“ (bei Embeds in der Fußzeile). Änderbar über `WATERMARK` in der `.env`.
 
-### Rund um die Uhr laufen lassen
-Der Bot muss dauerhaft laufen. Gratis-Optionen: ein alter PC/Raspberry Pi, oder Hoster mit Free-Tier für Node-Prozesse (z. B. Oracle Cloud Free Tier). Mit `pm2` (`npx pm2 start src/index.js --name brian`) startet er nach Abstürzen neu.
+### Rund um die Uhr laufen lassen (gratis, Oracle Cloud)
+Brian läuft auf einem kostenlosen Server von Oracle („Always Free“, dauerhaft gratis). Dein PC kann aus sein.
+
+**A) Konto anlegen**
+1. Auf <https://www.oracle.com/cloud/free/> auf **Start for free** klicken.
+2. Als *Home Region* eine Region in deiner Nähe nehmen, z. B. **Germany Central (Frankfurt)**. Die Region lässt sich später nicht ändern.
+3. Eine Kredit- oder Debitkarte wird nur zur Verifizierung verlangt. Solange du nur „Always Free“-Sachen nutzt, kostet es nichts.
+
+**B) Server erstellen**
+1. Im Oracle-Menü ☰ → **Compute** → **Instances** → **Create instance**.
+2. **Image:** *Change image* → **Ubuntu** → *Canonical Ubuntu 24.04*.
+3. **Shape:** *Change shape* → eine mit dem Label **„Always Free-eligible“** nehmen, z. B. **VM.Standard.E2.1.Micro** (AMD) oder **VM.Standard.A1.Flex** (Ampere, 1 OCPU / 6 GB). Bei „Out of capacity“ die andere Shape probieren.
+4. **Add SSH keys:** *Generate a key pair for me* → **Save private key** klicken. Die Datei in **brian.key** umbenennen und in deinen **Downloads**-Ordner legen.
+5. **Create** klicken und warten, bis der Status **Running** ist. Die **Public IP address** notieren, z. B. `130.61.12.34`.
+
+Ports musst du nicht öffnen, Brian verbindet sich selbst zu Discord.
+
+**C) Brian hochladen** (am Windows-PC)
+1. Läuft Brian noch auf deinem PC, das schwarze Fenster schließen. Sonst antwortet er doppelt.
+2. Den Brian-Ordner öffnen (der mit `package.json` und `.env`), in die Adressleiste `cmd` tippen und Enter drücken.
+3. Diesen Befehl einfügen, **`DEINE_IP` durch die IP ersetzen**, Enter drücken und die Frage einmal mit `yes` beantworten:
+   ```
+   scp -i "%USERPROFILE%\Downloads\brian.key" -r "%cd%" ubuntu@DEINE_IP:~/brian
+   ```
+   Kommt *„UNPROTECTED PRIVATE KEY FILE“*, einmal diesen Befehl ausführen und es nochmal versuchen:
+   ```
+   icacls "%USERPROFILE%\Downloads\brian.key" /inheritance:r /grant:r "%USERNAME%:R"
+   ```
+
+**D) Einrichten**
+1. Mit dem Server verbinden:
+   ```
+   ssh -i "%USERPROFILE%\Downloads\brian.key" ubuntu@DEINE_IP
+   ```
+2. Dort eingeben:
+   ```
+   bash ~/brian/deploy/setup.sh
+   ```
+   Das Skript installiert Node.js und alles Nötige und richtet Brian als Dienst ein. Er startet automatisch neu, wenn er abstürzt oder der Server neu startet. Am Ende steht **„Done! Brian now runs 24/7“**, dann kannst du das Fenster schließen.
+
+**Später: Code aktualisieren.** Im Brian-Ordner am PC `cmd` öffnen und Folgendes ausführen:
+```
+scp -i "%USERPROFILE%\Downloads\brian.key" -r src package.json package-lock.json ubuntu@DEINE_IP:~/brian/
+ssh -i "%USERPROFILE%\Downloads\brian.key" ubuntu@DEINE_IP "bash ~/brian/deploy/setup.sh"
+```
+
+**Nützlich auf dem Server:** `sudo journalctl -u brian -f` zeigt die Logs live (Beenden mit Strg+C). `sudo systemctl restart brian` startet ihn neu, `sudo systemctl stop brian` stoppt ihn.
+
+> Hinweis: Oracle kann Gratis-Server, die wochenlang fast nichts tun, wieder einsammeln. Brian ist meist zu aktiv dafür. Wenn du sichergehen willst, stell das Konto auf *Pay As You Go* um. Es bleibt gratis, solange du nur Always-Free-Ressourcen nutzt.
 
 ## Projektstruktur
 ```
@@ -89,4 +136,5 @@ src/speak.js        Baut den Prompt und fragt die KI
 src/ai.js           Gratis-KI-Kette (Groq → Pollinations → Sprüche)
 src/store.js        Speichert alles in data/brain.json
 src/watermark.js    Hängt „made by jarnoo__“ an jede Nachricht
+deploy/setup.sh     Richtet Brian 24/7 auf einem Ubuntu-Server ein
 ```
