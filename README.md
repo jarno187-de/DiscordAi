@@ -76,6 +76,21 @@ Brians Gedächtnis (Energie, Diebe, Freundschaften) liegt in `data/brain.json`.
 
 **Wasserzeichen:** Jede Nachricht des Bots endet klein mit „made by jarnoo__“ (bei Embeds in der Fußzeile). Änderbar über `WATERMARK` in der `.env`.
 
+### Rund um die Uhr: Gratis-Bot-Hoster (ohne Kreditkarte)
+Viele kostenlose Discord-Bot-Hoster nutzen dieselbe Oberfläche (**Pterodactyl-Panel**). Der Haken dabei: Die Leistung ist begrenzt, und bei den meisten musst du den Server **alle paar Tage im Dashboard verlängern** (Button „Renew“). Machst du das nicht, wird er gestoppt.
+
+1. Bei einem Gratis-Bot-Hoster anmelden und einen neuen **Discord-Bot-/Node.js-Server** erstellen. Nimm mindestens **128 MB RAM**, besser 256 MB oder mehr.
+2. Im Panel unter **Startup**:
+   - **Node-Version** auf **20** oder **22** stellen
+   - die Start-Datei (`JS_FILE` / „Main file“) auf **`index.js`** lassen
+3. Unter **Files** die Datei **`brian-hosting.zip`** hochladen, Rechtsklick → **Unarchive/Entpacken**. `package.json` und `index.js` müssen danach direkt im Hauptordner liegen, nicht in einem Unterordner.
+4. Im Panel **New File** anlegen, als Namen **`.env`** eingeben und den Inhalt deiner `.env` hineinkopieren (Token usw.). Dann speichern.
+5. Unter **Console** auf **Start** klicken. Das Panel installiert die Pakete selbst (`npm install`). Danach sollte erscheinen: `🧠 … is online with exactly one brain cell.`
+
+Nicht vergessen: im Dashboard regelmäßig **verlängern**. Läuft Brian gleichzeitig auf deinem PC, dort beenden, sonst antwortet er doppelt.
+
+Die ZIP baust du selbst so: Im Brian-Ordner alles außer `node_modules`, `.git` und `.env` markieren und als ZIP packen. Wichtig ist, dass die Dateien direkt in der ZIP liegen und nicht in einem Ordner darin.
+
 ### Rund um die Uhr laufen lassen (gratis, Oracle Cloud)
 Brian läuft auf einem kostenlosen Server von Oracle („Always Free“, dauerhaft gratis). Dein PC kann aus sein.
 
@@ -128,6 +143,7 @@ ssh -i "%USERPROFILE%\Downloads\brian.key" ubuntu@DEINE_IP "bash ~/brian/deploy/
 
 ## Projektstruktur
 ```
+index.js            Startdatei für Bot-Hoster (lädt src/index.js)
 src/index.js        Discord-Client, Nachrichten, Reinplatzen
 src/commands.js     Slash-Commands
 src/brain.js        Die Gehirnzelle: Energie, Füttern, Klauen, Freundschaft
