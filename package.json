@@ -1,0 +1,18 @@
+{
+  "name": "brian-the-bot",
+  "version": "1.0.0",
+  "description": "Brian: a Discord bot with exactly one brain cell. The whole server can steal it.",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "check": "node --check src/index.js && node --check src/ai.js && node --check src/brain.js && node --check src/personality.js && node --check src/commands.js && node --check src/store.js && node --check src/config.js && node --check src/speak.js && node --check src/watermark.js"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5"
+  }
+}
