@@ -24,6 +24,8 @@ export const config = {
   reactChance: num(process.env.REACT_CHANCE, 0.03),
   dataFile: process.env.DATA_FILE || 'data/brain.json',
   botName: process.env.BOT_NAME || 'Brian',
+  // Signature added to every message the bot sends.
+  watermark: process.env.WATERMARK ?? 'made by jarnoo__',
   // Brian answers every message that contains this word. Set TRIGGER_WORD= (empty) to disable.
   triggerWord: (process.env.TRIGGER_WORD ?? 'brian').trim().toLowerCase(),
 };

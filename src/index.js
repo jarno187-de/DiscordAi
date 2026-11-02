@@ -5,6 +5,7 @@ import * as brain from './brain.js';
 import * as commands from './commands.js';
 import { speak } from './speak.js';
 import { describeProviders } from './ai.js';
+import { watermark } from './watermark.js';
 import { RANDOM_REACTIONS } from './personality.js';
 
 if (!config.token) {
@@ -24,7 +25,9 @@ const HISTORY_SIZE = 14;
 const history = new Map(); // channelId -> [{ authorId, name, content, own }]
 
 function remember(message) {
-  const text = message.cleanContent?.trim();
+  let text = message.cleanContent?.trim();
+  // Drop our own small-print lines (watermark, energy info) so the AI doesn't start copying them.
+  if (message.author.id === client.user.id) text = text?.replace(/^-# .*$/gm, '').trim();
   if (!text) return;
   const list = history.get(message.channelId) || [];
   list.push({
@@ -77,7 +80,7 @@ async function respond(message, task) {
       history: historyAsMessages(message.channelId),
       task,
     });
-    await message.reply({ content: text, allowedMentions: { parse: [], repliedUser: false } });
+    await message.reply(watermark({ content: text, allowedMentions: { parse: [], repliedUser: false } }));
   } finally {
     clearInterval(typing);
     busyChannels.delete(message.channelId);

@@ -2,6 +2,7 @@ import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from 'discord.js';
 import * as brain from './brain.js';
 import { speak } from './speak.js';
 import { obsessionOfTheDay } from './personality.js';
+import { watermark } from './watermark.js';
 
 const NO_PINGS = { parse: [] };
 
@@ -199,6 +200,11 @@ const handlers = {
 export async function handle(interaction) {
   const h = handlers[interaction.commandName];
   if (!h) return;
+  // Sign every reply (including errors and ephemeral ones) with the watermark.
+  const reply = interaction.reply.bind(interaction);
+  const editReply = interaction.editReply.bind(interaction);
+  interaction.reply = (p) => reply(watermark(p));
+  interaction.editReply = (p) => editReply(watermark(p));
   try {
     await h(interaction);
   } catch (err) {

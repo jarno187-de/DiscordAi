@@ -56,6 +56,8 @@ Ohne Groq-Key läuft der Bot also trotzdem, ist nur langsamer/öfter auf Sprüch
 
 Brians Gedächtnis (Energie, Diebe, Freundschaften) liegt in `data/brain.json`.
 
+**Wasserzeichen:** Jede Nachricht des Bots endet klein mit „made by jarnoo__“ (bei Embeds in der Fußzeile). Änderbar über `WATERMARK` in der `.env`.
+
 ### Rund um die Uhr laufen lassen
 Der Bot muss dauerhaft laufen. Gratis-Optionen: ein alter PC/Raspberry Pi, oder Hoster mit Free-Tier für Node-Prozesse (z. B. Oracle Cloud Free Tier). Mit `pm2` (`npx pm2 start src/index.js --name brian`) startet er nach Abstürzen neu.
 
@@ -68,4 +70,5 @@ src/personality.js  Brians Persönlichkeit, Obsessionen, Notfall-Sprüche
 src/speak.js        Baut den Prompt und fragt die KI
 src/ai.js           Gratis-KI-Kette (Groq → Pollinations → Sprüche)
 src/store.js        Speichert alles in data/brain.json
+src/watermark.js    Hängt „made by jarnoo__“ an jede Nachricht
 ```
