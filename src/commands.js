@@ -7,6 +7,20 @@ import { watermark } from './watermark.js';
 const NO_PINGS = { parse: [] };
 
 export const definitions = [
+  new SlashCommandBuilder()
+    .setName('brian')
+    .setDescription('Talk to Brian in a style of your choice')
+    .addStringOption((o) => o.setName('prompt').setDescription('What do you want to say?').setRequired(true).setMaxLength(500))
+    .addStringOption((o) =>
+      o
+        .setName('style')
+        .setDescription('How should he answer? (default: normal)')
+        .addChoices(
+          { name: 'Normal – answers like a normal person', value: 'normal' },
+          { name: 'Dumb – one brain cell, talks nonsense', value: 'dumb' },
+          { name: 'Insult – brutal uncensored roast', value: 'insult' },
+        ),
+    ),
   new SlashCommandBuilder().setName('braincell').setDescription("Check on Brian's one and only brain cell"),
   new SlashCommandBuilder()
     .setName('feed')
@@ -40,6 +54,19 @@ function bar(value) {
 const who = (i) => ({ id: i.user.id, realName: i.member?.displayName || i.user.globalName || i.user.username });
 
 const handlers = {
+  async brian(i) {
+    const prompt = i.options.getString('prompt', true);
+    const style = i.options.getString('style') || 'normal';
+    await i.deferReply();
+    const text = await speak({
+      guildId: i.guildId,
+      speaker: who(i),
+      history: [{ role: 'user', content: `${who(i).realName}: ${prompt}` }],
+      style,
+    });
+    await i.editReply({ content: `> ${prompt}\n${text}`, allowedMentions: NO_PINGS });
+  },
+
   async braincell(i) {
     const g = brain.getState(i.guildId);
     const tier = brain.tierOf(g);

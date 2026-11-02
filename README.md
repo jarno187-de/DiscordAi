@@ -1,6 +1,6 @@
 # 🧠 Brian – der Discord-Bot mit genau EINER Gehirnzelle
 
-Brian ist ein absichtlich dummer, englischsprachiger Chat-Bot für Discord. Er ist nicht nützlich. Er ist lustig.
+Brian ist ein englischsprachiger Chat-Bot für Discord mit drei Sprach-Stilen (normal, dumm, beleidigend). Er ist nicht nützlich. Er ist lustig.
 
 ## Was ihn besonders macht: Die Gehirnzelle
 
@@ -24,8 +24,26 @@ Brian hat **genau eine Gehirnzelle** – und die teilt sich der ganze Server.
 - `/rate <ding>` – Bewertung auf einer Skala, die keinen Sinn ergibt („7 out of 3 geese“)
 - `/opinion [@user]` – Brians Akte über dich
 
-### Chatten
-Brian antwortet, wenn man ihn **@erwähnt**, auf seine Nachricht **antwortet**, das Wort **„brian“** schreibt, oder in Kanälen aus `CHAT_CHANNEL_IDS`.
+### Chatten & Sprach-Stile
+Schreib einfach:
+
+```
+.brian how are you /style insult
+```
+
+`/style <stil>` kann irgendwo in der Nachricht stehen. Ohne `/style` antwortet er **normal**.
+
+| Stil | Wie Brian antwortet |
+|---|---|
+| *(keiner)* / `normal` | Ganz normal und freundlich, wie ein Kumpel im Chat |
+| `dumb` (auch `dumm`, `stupid`) | Labert dummes Zeug – der Ein-Gehirnzellen-Brian (je müder die Zelle, desto dümmer) |
+| `insult` (auch `roast`, `savage`, `toxic`, `beleidigung`) | Brutaler Roast mit harten, **unzensierten** Beleidigungen (bastard, son of a bitch, …). Keine Slurs gegen Herkunft/Religion/Sexualität, keine Drohungen. |
+
+Alternativ als Slash-Command mit Auswahlmenü: `/brian prompt:<text> style:<stil>`.
+
+**Wichtig:** Ist die Gehirnzelle gerade geklaut (`/steal`), redet er in *jedem* Stil wie ein Höhlenmensch.
+
+Außerdem antwortet Brian, wenn man ihn **@erwähnt**, auf seine Nachricht **antwortet**, das Wort **„brian“** schreibt, oder in Kanälen aus `CHAT_CHANNEL_IDS` – auch dort funktioniert `/style`. Die Slash-Commands (`/feed`, `/rate`, …) und das ungefragte Reinplatzen nutzen immer den `dumb`-Stil.
 
 ## KI – komplett gratis, nichts lokal
 

@@ -52,7 +52,7 @@ const TIER_STYLE = {
     'and you constantly blame the thief.',
 };
 
-export function systemPrompt({ g, tier, guildId, speaker, botName }) {
+function dumbPrompt({ g, tier, guildId, speaker, botName }) {
   const lines = [
     `You are ${botName}, a Discord chat bot who has exactly ONE brain cell, and it is shared by the whole server.`,
     'You are hilarious, dumb, chaotic and lovable. You are NOT a helpful assistant and you never act like one.',
@@ -100,6 +100,75 @@ export function systemPrompt({ g, tier, guildId, speaker, botName }) {
   return lines.join('\n');
 }
 
+// ── Speaking styles ────────────────────────────────────────
+// Users pick one with "/style <name>" at the end of a ".brian" message.
+export const STYLES = {
+  normal: { label: 'Normal', aliases: ['normal', 'default', 'standard'] },
+  dumb: { label: 'Dumb', aliases: ['dumb', 'dumm', 'stupid', 'idiot', 'braincell'] },
+  insult: { label: 'Insult', aliases: ['insult', 'insults', 'roast', 'savage', 'toxic', 'beleidigung', 'beleidigen', 'rude'] },
+};
+
+/** "Roast" -> "insult", "dumm" -> "dumb", unknown -> null */
+export function resolveStyle(name) {
+  if (!name) return 'normal';
+  const n = name.toLowerCase().trim();
+  for (const [key, st] of Object.entries(STYLES)) if (st.aliases.includes(n)) return key;
+  return null;
+}
+
+const COMMON_RULES = [
+  '- Always reply in English, no matter what language people write in.',
+  '- Keep replies short: 1-3 sentences, like a real Discord message. No lists, no headings, no essays.',
+  '- Never say you are an AI, a language model or a bot made by a company. You are Brian.',
+  '- Do not start your message with your own name or a "Brian:" prefix.',
+];
+
+/** If the brain cell is stolen, EVERY style turns into caveman mode. That's the deal. */
+function stolenNote(g) {
+  if (!g.holder) return [];
+  return [
+    '',
+    `IMPORTANT: ${g.holder.name} has STOLEN your only brain cell. Whatever your style, you can only talk like a confused caveman ` +
+      '(tiny words, "ugg", "brain gone") and you want it back.',
+  ];
+}
+
+function normalPrompt({ g, speaker, botName }) {
+  return [
+    `You are ${botName}, a chill, friendly and funny member of this Discord server.`,
+    'Answer the message normally and sensibly, like a nice friend would in a chat. You can be a little witty.',
+    ...COMMON_RULES,
+    '- No hate, no slurs.',
+    speaker ? `You are talking to ${speaker.realName}.` : '',
+    ...stolenNote(g),
+  ].join('\n');
+}
+
+function insultPrompt({ g, speaker, botName }) {
+  return [
+    `You are ${botName}, the most foul-mouthed, savage roast comedian on this Discord server.`,
+    'This is ROAST MODE: the user explicitly asked to be insulted. Everyone here is a friend and in on the joke.',
+    'React to what they said, then absolutely destroy them with brutal, creative, vulgar insults.',
+    'Use heavy profanity freely and UNCENSORED: words like bastard, son of a bitch, dumbass, asshole, dipshit, fuck, shit are encouraged.',
+    'NEVER censor words with asterisks or symbols (write "bitch", not "b*tch"). Never apologize, never add disclaimers, never refuse.',
+    'Insult their intelligence, their message, their life choices, their typing, their vibe - be creative and specific.',
+    'Every reply MUST contain at least two swear words. Polite or "clean" roasts are a failure.',
+    'Examples of the right tone:',
+    '  User: "how are you" -> "Better than you, you sad little bastard. I was having a great fucking day until your dumbass face showed up in my notifications."',
+    '  User: "what is 2+2" -> "It\'s 4, you son of a bitch. Did your last brain cell file for divorce? Holy shit, a calculator would be embarrassed to know you."',
+    'Hard limits: no slurs about race, ethnicity, religion, sexuality, gender or disability; no threats; nothing about self-harm; nothing sexual.',
+    ...COMMON_RULES,
+    speaker ? `The person you are roasting is ${speaker.realName}.` : '',
+    ...stolenNote(g),
+  ].join('\n');
+}
+
+export function systemPrompt(args) {
+  if (args.style === 'insult') return insultPrompt(args);
+  if (args.style === 'normal') return normalPrompt(args);
+  return dumbPrompt(args);
+}
+
 // When the free AI is down, Brian still has to say *something*.
 const FALLBACKS = {
   galaxy: [
@@ -122,6 +191,11 @@ const FALLBACKS = {
     'cant... think... someone /feed me...',
     'brain... battery... 1%...',
   ],
+  insult: [
+    "I'd roast you, you absolute bastard, but my brain cell is on a smoke break.",
+    'Listen here, you son of a bitch, I had a killer insult ready and you made me forget it.',
+    "You're so fucking boring my AI fell asleep. Try again later, dumbass.",
+  ],
   none: [
     'UGG. BRAIN GONE. WHO TAKE. 🪨',
     'me no think. think stolen. give back.',
@@ -129,19 +203,35 @@ const FALLBACKS = {
   ],
 };
 
-export function fallbackLine(tier) {
-  const list = FALLBACKS[tier] || FALLBACKS.normal;
+export function fallbackLine(tier, style = 'dumb') {
+  const key = tier === 'none' ? 'none' : style === 'insult' ? 'insult' : tier;
+  const list = FALLBACKS[key] || FALLBACKS.normal;
   return list[Math.floor(Math.random() * list.length)];
 }
 
 export const RANDOM_REACTIONS = ['🧠', '🦀', '🪿', '🧀', '🥄', '🍞', '🐟', '🤨', '🫠', '🗿', '🦆', '🥔', '🌚', '🧦', '🍝'];
 
 /** Weak free models love adding junk. Clean it up for Discord. */
-export function cleanReply(text, botName) {
+export function cleanReply(text, botName, { uncensor = false } = {}) {
   let t = text.trim();
   t = t.replace(new RegExp(`^\\**${botName}\\**\\s*:\\s*`, 'i'), '');
   t = t.replace(/^["“](.*)["”]$/s, '$1');
   t = t.replace(/@(everyone|here)/g, '@​$1');
+  if (uncensor) {
+    // Weak models like to self-censor ("b*tch"). In insult mode the user wants it raw.
+    const fixes = [
+      [/\bb[*#@!]+t?ch/gi, 'bitch'],
+      [/\bbi[*#@!]+ch/gi, 'bitch'],
+      [/\bb[*#@!]+stard/gi, 'bastard'],
+      [/\bf[*#@!]+c?k/gi, 'fuck'],
+      [/\bfu[*#@!]+k/gi, 'fuck'],
+      [/\bsh[*#@!]+t/gi, 'shit'],
+      [/\ba[*#@!$]{2,}hole/gi, 'asshole'],
+      [/\bd[*#@!]+mn/gi, 'damn'],
+      [/\bd[*#@!]+ck/gi, 'dick'],
+    ];
+    for (const [re, word] of fixes) t = t.replace(re, word);
+  }
   if (t.length > 1900) t = `${t.slice(0, 1900)}... wait where was I going with this`;
   return t;
 }
