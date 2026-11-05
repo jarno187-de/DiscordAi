@@ -7,6 +7,7 @@ import { speak } from './speak.js';
 import { describeProviders } from './ai.js';
 import { watermark } from './watermark.js';
 import { RANDOM_REACTIONS, STYLES, resolveStyle } from './personality.js';
+import { verificationCommands, handleVerificationInteraction, onMemberJoin, recoverAll, recoverGuild } from './verification/index.js';
 
 if (!config.token) {
   console.error('❌ DISCORD_TOKEN is missing. Copy .env.example to .env and put your bot token in it.');
@@ -16,7 +17,13 @@ if (!config.token) {
 store.load();
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    // Optional for verification (auto-give Unverified on join). Needs "Server Members Intent" in the Developer Portal.
+    ...(process.env.MEMBERS_INTENT === 'true' ? [GatewayIntentBits.GuildMembers] : []),
+  ],
   partials: [Partials.Channel],
 });
 
@@ -109,18 +116,25 @@ client.once(Events.ClientReady, async (c) => {
   try {
     if (config.guildId) {
       const g = await c.guilds.fetch(config.guildId);
-      await g.commands.set(commands.definitions);
+      await g.commands.set([...commands.definitions, ...verificationCommands]);
       console.log(`✅ Slash commands registered on server "${g.name}".`);
     } else {
-      await c.application.commands.set(commands.definitions);
+      await c.application.commands.set([...commands.definitions, ...verificationCommands]);
       console.log('✅ Slash commands registered globally (may take a while to show up).');
     }
   } catch (err) {
     console.error('⚠️ Could not register slash commands:', err.message);
   }
+
+  // Verification: pick up an existing setup (read-only).
+  await recoverAll(c);
 });
 
+client.on(Events.GuildMemberAdd, onMemberJoin);
+client.on(Events.GuildCreate, (guild) => recoverGuild(guild).catch(() => {}));
+
 client.on(Events.InteractionCreate, async (interaction) => {
+  if (await handleVerificationInteraction(interaction)) return;
   if (!interaction.isChatInputCommand() || !interaction.inGuild()) return;
   await commands.handle(interaction);
 });

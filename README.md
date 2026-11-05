@@ -45,6 +45,25 @@ Alternativ als Slash-Command mit Auswahlmenü: `/brian prompt:<text> style:<stil
 
 Außerdem antwortet Brian, wenn man ihn **@erwähnt**, auf seine Nachricht **antwortet**, das Wort **„brian“** schreibt, oder in Kanälen aus `CHAT_CHANNEL_IDS` – auch dort funktioniert `/style`. Die Slash-Commands (`/feed`, `/rate`, …) und das ungefragte Reinplatzen nutzen immer den `dumb`-Stil.
 
+## 🛂 Verifizierung (gegen Bots)
+
+Brian kann auch neue Mitglieder verifizieren. Sie sehen nur wenige Kanäle (z. B. verify und rules), bis sie ein Bild-Captcha gelöst haben. Der Code dafür liegt komplett im Ordner `src/verification/`.
+
+| Befehl | Was er macht |
+|---|---|
+| `/verification` | Assistent: Rollen Verified/Unverified, anhaken, wer welche Kanäle sieht, Verify-Kanal + Button |
+| `/verification-settings` | Captcha, Mindestalter des Accounts, Sperre/Kick, Log-Kanal, Texte |
+| `/verification-restore` | Letzte Einrichtung rückgängig machen |
+
+Schutz: Bild-Captcha mit neuem Code bei jedem Versuch, Mindestalter des Accounts, von Discord als Spam markierte Accounts werden abgelehnt, zu schnelle Antworten fallen durch, Sperre oder Kick nach zu vielen Fehlversuchen, optionaler Log-Kanal.
+
+Was du dafür brauchst:
+- Brians Rolle braucht **Rollen verwalten** und **Kanäle verwalten** (für Kick zusätzlich **Mitglieder kicken**). Sie muss in der Rollenliste **über** Verified und Unverified stehen.
+- Optional: Im Developer Portal den **Server Members Intent** einschalten und in der `.env` `MEMBERS_INTENT=true` setzen. Dann bekommen neue Mitglieder automatisch Unverified.
+- Wer die Befehle nutzen darf, stellst du unter **Servereinstellungen → Integrationen → Brian → Verwalten** ein.
+
+Die Einstellungen der Verifizierung liegen in `data/verification/`.
+
 ## KI – komplett gratis, nichts lokal
 
 Brian nutzt eine Kette, damit er immer *irgendwas* sagt:
